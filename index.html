@@ -12,11 +12,79 @@
   canvas{width:min(100vw,177.77vh);height:auto;max-height:100vh;image-rendering:pixelated;image-rendering:crisp-edges;background:#090d1d;box-shadow:0 0 0 4px #12172c,0 0 0 8px #03050c,0 22px 80px #000,0 0 80px #2ba8ff3a;}
   .tag{position:fixed;left:14px;bottom:10px;color:#b6e8ff;font-size:12px;line-height:1.5;text-shadow:0 2px 2px #000;opacity:.9;pointer-events:none;}
   .tag b{color:#fff6bf;}
+
+  /* ---- arcade UI ---- */
+  body{padding-top:34px;box-sizing:border-box;}
+  canvas{max-height:calc(100vh - 40px);width:min(100vw,calc((100vh - 40px)*1.7778));}
+  #hiscoreBar{position:fixed;top:0;left:0;right:0;height:34px;z-index:10;display:flex;align-items:center;justify-content:center;gap:10px;
+    background:linear-gradient(180deg,#0a1230,#05060ccc);border-bottom:1px solid #2ba8ff55;
+    font:700 14px ui-monospace,Consolas,monospace;letter-spacing:1.5px;text-shadow:0 2px 3px #000;text-transform:uppercase;white-space:nowrap;}
+  #hiscoreBar .lbl{color:#8fdcff;} #hiscoreBar .sc{color:#fff1b0;} #hiscoreBar .nm{color:#ff9bd0;max-width:40vw;overflow:hidden;text-overflow:ellipsis;}
+  .overlay{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(3,5,12,.86);}
+  .overlay.hidden{display:none;}
+  .panel{width:min(92vw,580px);max-height:86vh;overflow:auto;background:linear-gradient(180deg,#0c1330,#070a16);
+    border:2px solid #2ba8ff;border-radius:16px;padding:22px 30px 24px;box-sizing:border-box;
+    box-shadow:0 0 0 2px #03050c,0 0 46px #2ba8ff55,inset 0 0 50px #0a1a44;color:#dff;}
+  .panel h1{margin:0 0 2px;font-size:30px;letter-spacing:3px;color:#ffe08a;text-align:center;text-shadow:0 0 14px #ffb84d88,0 3px 0 #6a3d00;text-transform:uppercase;}
+  .panel h2{margin:14px 0 4px;font-size:14px;letter-spacing:2px;color:#7fe9ff;text-transform:uppercase;}
+  .panel p{margin:4px 0;font-size:14px;line-height:1.55;color:#cfe6f4;}
+  .panel ul{margin:4px 0;padding-left:20px;} .panel li{font-size:14px;line-height:1.7;color:#cfe6f4;}
+  .panel kbd{display:inline-block;min-width:12px;padding:1px 7px;margin:0 1px;border-radius:5px;background:#16204a;border:1px solid #36508f;border-bottom-width:3px;color:#eaf6ff;font:600 12px ui-monospace,monospace;text-align:center;}
+  .row{display:flex;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:space-between;}
+  .chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#a9c4dd;cursor:pointer;user-select:none;}
+  .chk input{width:16px;height:16px;accent-color:#2ba8ff;cursor:pointer;}
+  .btn{appearance:none;cursor:pointer;font:700 15px ui-monospace,Consolas,monospace;letter-spacing:2px;text-transform:uppercase;
+    color:#04121f;background:linear-gradient(180deg,#7fe6ff,#27a8ff);border:0;border-radius:10px;padding:11px 26px;
+    box-shadow:0 4px 0 #14568f,0 8px 18px #0008;transition:transform .06s,box-shadow .06s;}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #14568f,0 4px 10px #0008;}
+  .nin{font:700 22px ui-monospace,Consolas,monospace;letter-spacing:6px;text-align:center;text-transform:uppercase;
+    width:240px;max-width:70vw;padding:10px 12px;border-radius:10px;border:2px solid #2ba8ff;background:#04111f;color:#fff1b0;outline:none;}
+  .nin:focus{box-shadow:0 0 0 3px #2ba8ff55;}
+  .sub{font-size:12.5px;color:#88a3bd;text-align:center;margin-top:4px;}
 </style>
 </head>
 <body>
+<div id="hiscoreBar"><span class="lbl">High Score</span><span class="sc" id="hsScore">0</span><span class="nm" id="hsName">—</span></div>
 <div id="shell"><canvas id="game" width="960" height="540" aria-label="Moonspire Run DX game canvas"></canvas></div>
 <div class="tag"><b>Moonspire Run DX</b> — A/D or arrows move · Space/W jump · J bolt · <b>K radiant light</b> · R restart</div>
+
+<div id="howto" class="overlay hidden">
+  <div class="panel">
+    <h1>Moonspire Run DX</h1>
+    <p style="text-align:center;color:#9fb6d6;">Sprint through the moonlit ruins and reach the Moon Gate.</p>
+    <h2>Controls</h2>
+    <ul>
+      <li><kbd>A</kbd> <kbd>D</kbd> or <kbd>&larr;</kbd> <kbd>&rarr;</kbd> &mdash; move</li>
+      <li><kbd>Space</kbd> / <kbd>W</kbd> / <kbd>&uarr;</kbd> &mdash; jump</li>
+      <li><kbd>J</kbd> &mdash; cast a bolt &nbsp;&middot;&nbsp; <kbd>K</kbd> &mdash; radiant light spell</li>
+      <li><kbd>R</kbd> &mdash; restart the run</li>
+    </ul>
+    <h2>Scoring</h2>
+    <ul>
+      <li>Collect shards and defeat enemies for points.</li>
+      <li>Finish fast for a big <b style="color:#ffd36b;">speed bonus</b> (up to +3000).</li>
+      <li>Beat a high score and you'll add your name to the board.</li>
+    </ul>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="howtoHide"> Don't show this again</label>
+      <button class="btn" id="howtoPlay">Play &#9656;</button>
+    </div>
+  </div>
+</div>
+
+<div id="nameEntry" class="overlay hidden">
+  <div class="panel" style="max-width:460px;text-align:center;">
+    <h1 style="color:#ff9bd0;text-shadow:0 0 14px #ff5fb088;">New High Score!</h1>
+    <p id="nameScoreLine" style="color:#bff7ff;"></p>
+    <h2 style="text-align:center;">Enter your name</h2>
+    <input id="nameInput" class="nin" maxlength="14" autocomplete="off" spellcheck="false" placeholder="AAA">
+    <div class="sub">up to 14 characters</div>
+    <div class="row" style="justify-content:center;">
+      <button class="btn" id="nameSave">Save &#9656;</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (() => {
 'use strict';
@@ -50,6 +118,7 @@ let camera = 0;
 let shake = 0;
 let won = false;
 let freeze = 0;
+let paused = false;   // true while an overlay (instructions / name entry) is open
 
 const palettes = {
   skyTop:'#121a45', skyMid:'#2d2049', skyBottom:'#07111d',
@@ -134,6 +203,8 @@ const decor = [
 ].map((d,i)=>({x:d[0],y:d[1],type:d[2],seed:i*19+5}));
 
 window.addEventListener('keydown', e => {
+  const ae = document.activeElement;
+  if (paused || (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA'))) return; // don't drive the game from a modal / text field
   const k = e.key.toLowerCase();
   keys[k] = true;
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
@@ -162,6 +233,7 @@ function dust(x,y,dir,count=5){
 
 function update(dt){
   nowTime += dt;
+  if (paused) return;   // background keeps animating (nowTime advances), gameplay is held
   if (freeze > 0) { freeze -= dt; return; }
   if (won) {
     // Keep particles and background alive on the clear screen.
@@ -301,6 +373,7 @@ function update(dt){
     p.timeBonus = Math.max(0, Math.round(TIME_BONUS_MAX * (1 - p.time / PAR_TIME)));
     p.score += p.shards * 10 + p.timeBonus;
     burst(LEVEL_W-240,380,'#9effff','#ffe591',80); shake = 14;
+    onLevelClear();
   }
   const targetCam = clamp(p.x - W*.42, 0, LEVEL_W - W);
   camera = lerp(camera, targetCam, 1 - Math.pow(.00035, dt));
@@ -602,10 +675,21 @@ function drawTiles(images){
   }
 }
 
+// soft round glow (replaces the old hard-edged square fillRect halos)
+function softGlow(cx, cy, r, color, alpha){
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, color);
+  g.addColorStop(1, color + '00');
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.2832); ctx.fill();
+  ctx.restore();
+}
 function drawCrystal(x,y,scale=1,alpha=1){
   ctx.save(); ctx.globalAlpha=alpha;
   const sx=x, sy=y;
-  ctx.globalAlpha=alpha*.25; ctx.fillStyle='#65eaff'; ctx.fillRect(sx-18*scale,sy-42*scale,40*scale,38*scale);
+  softGlow(sx+2*scale, sy-22*scale, 30*scale, '#65eaff', alpha*.34);
   ctx.globalAlpha=alpha;
   fillPoly([[sx,sy-42*scale],[sx+12*scale,sy-16*scale],[sx+3*scale,sy],[sx-9*scale,sy-18*scale]], '#45dfff');
   fillPoly([[sx-12*scale,sy-31*scale],[sx,sy-14*scale],[sx-7*scale,sy],[sx-19*scale,sy-10*scale]], '#2a7fd7');
@@ -624,7 +708,7 @@ function drawMushroom(x,y,seed){
 }
 function drawLamp(x,y,seed){
   ctx.fillStyle='#2b1c28'; ctx.fillRect(x-3,y-42,6,42); ctx.fillRect(x-10,y-45,20,5);
-  ctx.globalAlpha=.28; ctx.fillStyle='#ffc75f'; ctx.fillRect(x-24,y-56,48,45); ctx.globalAlpha=1;
+  softGlow(x, y-47, 32, '#ffc75f', .38);
   ctx.fillStyle='#ffc75f'; ctx.fillRect(x-7,y-57,14,17); ctx.fillStyle='#fff0a6'; ctx.fillRect(x-3,y-53,6,8);
   ctx.strokeStyle='#6f493f'; ctx.lineWidth=2; ctx.strokeRect(x-8,y-58,16,19);
 }
@@ -659,7 +743,7 @@ function drawCoin(co){
   const sx = Math.round(co.x - camera);
   const yy = co.y + Math.sin(nowTime*4 + co.phase)*6;
   const spin = (Math.sin(nowTime*5 + co.phase)*.5+.5);
-  ctx.globalAlpha=.25; ctx.fillStyle='#73f2ff'; ctx.fillRect(sx-13,yy-15,26,30); ctx.globalAlpha=1;
+  softGlow(sx, yy-1, 20, '#73f2ff', .32);
   const w = 8 + Math.round(spin*12);
   fillPoly([[sx,yy-16],[sx+w,yy-5],[sx+w*.65,yy+14],[sx-w*.65,yy+14],[sx-w,yy-5]], '#ffca5f');
   fillPoly([[sx,yy-11],[sx+w*.45,yy-3],[sx,yy+8],[sx-w*.45,yy-3]], '#fff0a7');
@@ -670,7 +754,7 @@ function drawEnemy(e){
   const squash = e.squash || 0;
   const wob = Math.sin(nowTime*7 + e.x*.03)*3;
   ctx.fillStyle = '#060913'; ctx.fillRect(sx+4, y+28, 38, 7);
-  ctx.globalAlpha=.3; ctx.fillStyle=e.kind?'#bc6dff':'#6ae7ff'; ctx.fillRect(sx-4,y+2,54,38); ctx.globalAlpha=1;
+  softGlow(sx+23, y+20, 32, e.kind?'#bc6dff':'#6ae7ff', .34);
   fillPoly([[sx+3,y+16+wob*.3],[sx+12,y+4],[sx+32,y+3],[sx+43,y+18+wob*.2],[sx+38,y+34-squash*16],[sx+7,y+34-squash*16]], e.kind?'#7b3acf':'#3444a6');
   fillPoly([[sx+9,y+12],[sx+20,y+7],[sx+31,y+8],[sx+38,y+17],[sx+32,y+24],[sx+14,y+23]], e.kind?'#b367ff':'#5ed6ff');
   ctx.fillStyle='#ff6680'; ctx.fillRect(sx+(e.v>0?29:12),y+14,7,5); ctx.fillStyle='#fff'; ctx.fillRect(sx+(e.v>0?32:15),y+15,2,2);
@@ -678,7 +762,7 @@ function drawEnemy(e){
 }
 function drawBolt(b){
   const sx = Math.round(b.x - camera), y=Math.round(b.y);
-  ctx.globalAlpha=.22; ctx.fillStyle='#74f1ff'; ctx.fillRect(sx-10,y-9,38,22); ctx.globalAlpha=1;
+  softGlow(sx+8, y+1, 20, '#74f1ff', .28);
   ctx.fillStyle='#ffffff'; ctx.fillRect(sx+12,y-2,11,4);
   ctx.fillStyle='#62eaff'; ctx.fillRect(sx-4,y-4,22,8);
   ctx.fillStyle='#2d6cff'; ctx.fillRect(sx-12,y-2,9,4);
@@ -794,13 +878,29 @@ function drawHUD(){
 function drawClear(){
   if (!won) return;
   ctx.fillStyle = '#03050cdc'; ctx.fillRect(0,0,W,H);
-  ctx.globalAlpha = .28; drawPixelCircle(W/2, H/2-24, 126, '#76eaff', 1); ctx.globalAlpha = 1;
+  ctx.globalAlpha = .20; drawPixelCircle(W/2, 150, 120, '#76eaff', 1); ctx.globalAlpha = 1;
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#ffeaa7'; ctx.font = '48px ui-monospace,Consolas,monospace'; ctx.fillText('LEVEL CLEAR', W/2, 212);
-  ctx.font = '19px ui-monospace,Consolas,monospace';
-  ctx.fillStyle = '#bff7ff'; ctx.fillText('Time  ' + fmtTimeMs(p.time) + '          Speed bonus  +' + p.timeBonus, W/2, 258);
-  ctx.fillStyle = '#ffcf63'; ctx.font = '24px ui-monospace,Consolas,monospace'; ctx.fillText('Final score  ' + p.score, W/2, 296);
-  ctx.fillStyle = '#9fb6d6'; ctx.font = '16px ui-monospace,Consolas,monospace'; ctx.fillText('Press R to run again', W/2, 330);
+  ctx.fillStyle = '#ffeaa7'; ctx.font = '40px ui-monospace,Consolas,monospace'; ctx.fillText('LEVEL CLEAR', W/2, 92);
+  ctx.font = '18px ui-monospace,Consolas,monospace'; ctx.fillStyle = '#bff7ff';
+  ctx.fillText('Time  ' + fmtTimeMs(p.time) + '      Speed bonus  +' + p.timeBonus + '      Score  ' + fmtNum(p.score), W/2, 126);
+
+  // arcade high-score table
+  ctx.fillStyle = '#ffd36b'; ctx.font = '20px ui-monospace,Consolas,monospace'; ctx.fillText('★  HIGH SCORES  ★', W/2, 170);
+  ctx.font = '17px ui-monospace,Consolas,monospace';
+  const rowH = 28, top = 200, lx = W/2 - 210, rx = W/2 + 210;
+  for (let i = 0; i < board.length; i++){
+    const e = board[i], y = top + i*rowH, hot = (i === lastRank);
+    if (hot){ ctx.fillStyle = '#19305a'; ctx.fillRect(W/2 - 244, y - 19, 488, 25); }
+    ctx.textAlign = 'left';
+    ctx.fillStyle = hot ? '#fff6bf' : (i < 3 ? '#9fe9ff' : '#9fb6d6');
+    ctx.fillText(String(i + 1).padStart(2, ' ') + '.  ' + cleanName(e.name), lx, y);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = hot ? '#fff6bf' : '#ffcf63';
+    ctx.fillText(fmtNum(e.score), rx, y);
+  }
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#9fb6d6'; ctx.font = '15px ui-monospace,Consolas,monospace';
+  ctx.fillText(awaitingName ? 'Enter your name above…' : 'Press R to run again', W/2, top + board.length*rowH + 24);
   ctx.textAlign = 'left';
 }
 
@@ -825,6 +925,126 @@ function drawLoading(msg){
   ctx.fillStyle = '#71eaff'; ctx.font = '20px ui-monospace,Consolas,monospace'; ctx.fillText(msg, 372, 270);
 }
 
+// ===== Arcade leaderboard + menus (localStorage — GitHub-Pages friendly) =====
+const LB_KEY   = 'moonspire.scores.v1';
+const HIDE_KEY = 'moonspire.hideHowto.v1';
+const LB_MAX   = 10;
+const SEED_BOARD = [
+  {name:'ACE',score:5000,time:42},{name:'NYX',score:4200,time:51},
+  {name:'ZED',score:3400,time:58},{name:'FAY',score:2600,time:66},
+  {name:'IVO',score:1800,time:74},{name:'KAI',score:1200,time:80},
+  {name:'LUX',score:800,time:88}, {name:'ORB',score:400,time:95}
+];
+let board = [];
+let lastRank = -1;        // index of the player's freshly-saved entry (highlighted)
+let awaitingName = false; // true while the name-entry overlay is open
+
+// --- input hardening: every name is treated as untrusted ---
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function cleanName(s){
+  // strip control chars, trim, cap length; never returns empty
+  s = String(s == null ? '' : s).replace(/[\x00-\x1f\x7f]/g, '').trim().slice(0, 14);
+  return s || 'AAA';
+}
+function cleanScore(n){ n = Math.floor(Number(n)); return (isFinite(n) && n > 0) ? Math.min(n, 99999999) : 0; }
+function fmtNum(n){ return String(cleanScore(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+function loadBoard(){
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(LB_KEY)); } catch(_) { raw = null; }
+  if (!Array.isArray(raw)) return SEED_BOARD.map(e => ({...e}));
+  const cleaned = raw
+    .map(e => ({ name: cleanName(e && e.name), score: cleanScore(e && e.score), time: Math.max(0, Number(e && e.time) || 0) }))
+    .filter(e => e.score > 0)
+    .sort((a,b) => b.score - a.score)
+    .slice(0, LB_MAX);
+  return cleaned.length ? cleaned : SEED_BOARD.map(e => ({...e}));
+}
+function saveBoard(){ try { localStorage.setItem(LB_KEY, JSON.stringify(board)); } catch(_) {} }
+function qualifies(score){
+  score = cleanScore(score);
+  return score > 0 && (board.length < LB_MAX || score > board[board.length - 1].score);
+}
+function addScore(name, score, time){
+  const entry = { name: cleanName(name), score: cleanScore(score), time: Math.max(0, Number(time) || 0) };
+  board.push(entry);
+  board.sort((a,b) => b.score - a.score);
+  board = board.slice(0, LB_MAX);
+  lastRank = board.indexOf(entry);
+  saveBoard();
+  renderHiScoreBar();
+  return lastRank;
+}
+
+function renderHiScoreBar(){
+  const top = board[0] || { name:'—', score:0 };
+  const sc = document.getElementById('hsScore');
+  const nm = document.getElementById('hsName');
+  if (sc) sc.textContent = fmtNum(top.score);   // textContent => safe, never parsed as HTML
+  if (nm) nm.textContent = top.name;
+}
+
+function setPaused(b){ paused = b; }
+
+// ---- instruction popup ----
+function showHowto(){
+  document.getElementById('howtoHide').checked = false;
+  document.getElementById('howto').classList.remove('hidden');
+  setPaused(true);
+}
+function hideHowto(){
+  document.getElementById('howto').classList.add('hidden');
+  setPaused(false);
+}
+function wireHowto(){
+  document.getElementById('howtoPlay').addEventListener('click', () => {
+    if (document.getElementById('howtoHide').checked) {
+      try { localStorage.setItem(HIDE_KEY, '1'); } catch(_) {}
+    }
+    hideHowto();
+  });
+}
+
+// ---- name entry when a new high score is set ----
+function promptName(score, time){
+  awaitingName = true;
+  setPaused(true);
+  document.getElementById('nameScoreLine').textContent = 'Score ' + fmtNum(score) + '  ·  Time ' + fmtTimeMs(time);
+  const input = document.getElementById('nameInput');
+  input.value = '';
+  document.getElementById('nameEntry').classList.remove('hidden');
+  setTimeout(() => input.focus(), 30);
+}
+function submitName(){
+  if (!awaitingName) return;
+  addScore(document.getElementById('nameInput').value, p.score, p.time);
+  document.getElementById('nameEntry').classList.add('hidden');
+  awaitingName = false;
+  setPaused(false);   // stays on the clear screen; R restarts
+}
+function wireNameEntry(){
+  document.getElementById('nameSave').addEventListener('click', submitName);
+  document.getElementById('nameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); submitName(); }
+  });
+}
+
+// fired once when the gate is reached
+function onLevelClear(){
+  lastRank = -1;
+  if (qualifies(p.score)) promptName(p.score, p.time);
+}
+
+function initArcade(){
+  board = loadBoard();
+  renderHiScoreBar();
+  wireHowto();
+  wireNameEntry();
+  let hidden = false;
+  try { hidden = localStorage.getItem(HIDE_KEY) === '1'; } catch(_) {}
+  if (hidden) setPaused(false); else showHowto();
+}
+
 async function boot(){
   drawLoading('forging sprites...');
   const images = {
@@ -844,6 +1064,7 @@ async function boot(){
   requestAnimationFrame(loop);
 }
 boot();
+initArcade();
 })();
 </script>
 </body>

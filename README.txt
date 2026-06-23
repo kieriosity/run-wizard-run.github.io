@@ -15,6 +15,17 @@ Scoring
   (up to 3000 points for an instant run, scaling down to 0 at the 90s par time).
 - The run timer is shown top-right; your time, speed bonus, and final score appear on the clear screen.
 
+Arcade leaderboard
+- An instruction popup appears on first load. Tick "Don't show this again" to skip it next time.
+- The top-10 high scores are kept arcade-style. Beat a listed score and you enter your name.
+- The current #1 high score and name are shown in the bar at the top of the page.
+- Scores persist in the browser via localStorage (works on GitHub Pages, which is static/read-only
+  and cannot host a writable file). Persistence is per-browser; a globally shared leaderboard would
+  need an external service (e.g. a small serverless API).
+- All entered names are sanitized (control characters stripped, length-capped) and rendered with
+  textContent / canvas text only, so a name can never inject HTML or script. Scores read back from
+  localStorage are re-validated, so a tampered store can't break or exploit the page.
+
 What changed in this DX rebuild
 - Wizard rebuilt from scratch as pixel sprites: 12-frame run cycle, 6-frame idle, 2 airborne frames.
 - Improved animation timing: run frames advance based on actual movement speed, with landing dust and footstep particles.

@@ -63,6 +63,8 @@
     <ul>
       <li>Collect shards and defeat enemies for points.</li>
       <li>Finish fast for a big <b style="color:#ffd36b;">speed bonus</b> (up to +3000).</li>
+      <li>Sweep <b>every</b> shard and enemy for a <b style="color:#9effa6;">Perfect Clear</b> bonus &mdash; the only way to challenge the 5,600 top score.</li>
+      <li>You have only <b style="color:#ff6b82;">2 hearts</b> &mdash; two hits and the run resets to zero.</li>
       <li>Beat a high score and you'll add your name to the board.</li>
     </ul>
     <div class="row">
@@ -105,6 +107,8 @@ const LEVEL_W = 6784;
 const LIGHT_DUR = 0.95;          // how long the radiant-light spell lingers
 const PAR_TIME = 90;             // seconds; finish under this for a speed bonus
 const TIME_BONUS_MAX = 3000;     // points awarded for an instant finish (scales down to 0 at PAR_TIME)
+const SHARD_SWEEP = 700;         // bonus for collecting EVERY shard
+const ENEMY_SWEEP = 700;         // bonus for defeating EVERY enemy (both = "Perfect Clear", needed to beat 5,000)
 const PF = 192;                  // source sprite frame size (px)
 const PLAYER_H = 150;            // on-screen player draw height (px)
 const FEET_FRAC = 186/192;       // where the feet sit inside the sprite frame
@@ -174,7 +178,7 @@ let particles = [];
 let p;
 
 function makePlayer(){
-  return {x:112, y:280, w:36, h:78, vx:0, vy:0, face:1, on:false, coyote:0, inv:0, spell:0, score:0, life:5, shards:0, runAnim:0, idleAnim:0, footClock:0, lastOn:false, lightCast:0, lightCool:0, time:0, timeBonus:0};
+  return {x:112, y:280, w:36, h:78, vx:0, vy:0, face:1, on:false, coyote:0, inv:0, spell:0, score:0, life:2, shards:0, runAnim:0, idleAnim:0, footClock:0, lastOn:false, lightCast:0, lightCool:0, time:0, timeBonus:0, shardSweep:0, enemySweep:0};
 }
 function reset(){
   p = makePlayer();
@@ -371,7 +375,9 @@ function update(dt){
   if (p.x > LEVEL_W - 360) {
     won = true;
     p.timeBonus = Math.max(0, Math.round(TIME_BONUS_MAX * (1 - p.time / PAR_TIME)));
-    p.score += p.shards * 10 + p.timeBonus;
+    p.shardSweep = (p.shards >= coins.length) ? SHARD_SWEEP : 0;   // every shard collected
+    p.enemySweep = enemies.every(e => e.dead) ? ENEMY_SWEEP : 0;   // every enemy defeated
+    p.score += p.shards * 10 + p.timeBonus + p.shardSweep + p.enemySweep;
     burst(LEVEL_W-240,380,'#9effff','#ffe591',80); shake = 14;
     onLevelClear();
   }
@@ -880,14 +886,25 @@ function drawClear(){
   ctx.fillStyle = '#03050cdc'; ctx.fillRect(0,0,W,H);
   ctx.globalAlpha = .20; drawPixelCircle(W/2, 150, 120, '#76eaff', 1); ctx.globalAlpha = 1;
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#ffeaa7'; ctx.font = '40px ui-monospace,Consolas,monospace'; ctx.fillText('LEVEL CLEAR', W/2, 92);
-  ctx.font = '18px ui-monospace,Consolas,monospace'; ctx.fillStyle = '#bff7ff';
-  ctx.fillText('Time  ' + fmtTimeMs(p.time) + '      Speed bonus  +' + p.timeBonus + '      Score  ' + fmtNum(p.score), W/2, 126);
+  const perfect = p.shardSweep > 0 && p.enemySweep > 0;
+  ctx.fillStyle = '#ffeaa7'; ctx.font = '38px ui-monospace,Consolas,monospace'; ctx.fillText('LEVEL CLEAR', W/2, 80);
+  // line 1 — time + completion counts
+  ctx.font = '17px ui-monospace,Consolas,monospace'; ctx.fillStyle = '#bff7ff';
+  ctx.fillText('Time  ' + fmtTimeMs(p.time) + '       Shards  ' + p.shards + '/' + coins.length
+             + '       Enemies  ' + enemies.filter(e => e.dead).length + '/' + enemies.length, W/2, 108);
+  // line 2 — bonus breakdown
+  const parts = ['Speed +' + p.timeBonus];
+  if (p.shardSweep) parts.push('Shard sweep +' + p.shardSweep);
+  if (p.enemySweep) parts.push('Enemy sweep +' + p.enemySweep);
+  ctx.fillStyle = '#cfe6f4'; ctx.fillText(parts.join('     '), W/2, 134);
+  // score (gold, or green + badge on a perfect clear)
+  ctx.font = '22px ui-monospace,Consolas,monospace'; ctx.fillStyle = perfect ? '#9effa6' : '#ffcf63';
+  ctx.fillText((perfect ? '★ PERFECT CLEAR ★    ' : '') + 'Score  ' + fmtNum(p.score), W/2, 164);
 
   // arcade high-score table
-  ctx.fillStyle = '#ffd36b'; ctx.font = '20px ui-monospace,Consolas,monospace'; ctx.fillText('★  HIGH SCORES  ★', W/2, 170);
-  ctx.font = '17px ui-monospace,Consolas,monospace';
-  const rowH = 28, top = 200, lx = W/2 - 210, rx = W/2 + 210;
+  ctx.fillStyle = '#ffd36b'; ctx.font = '19px ui-monospace,Consolas,monospace'; ctx.fillText('★  HIGH SCORES  ★', W/2, 192);
+  ctx.font = '16px ui-monospace,Consolas,monospace';
+  const rowH = 27, top = 220, lx = W/2 - 210, rx = W/2 + 210;
   for (let i = 0; i < board.length; i++){
     const e = board[i], y = top + i*rowH, hot = (i === lastRank);
     if (hot){ ctx.fillStyle = '#19305a'; ctx.fillRect(W/2 - 244, y - 19, 488, 25); }
@@ -926,11 +943,11 @@ function drawLoading(msg){
 }
 
 // ===== Arcade leaderboard + menus (localStorage — GitHub-Pages friendly) =====
-const LB_KEY   = 'moonspire.scores.v1';
+const LB_KEY   = 'moonspire.scores.v2';
 const HIDE_KEY = 'moonspire.hideHowto.v1';
 const LB_MAX   = 10;
 const SEED_BOARD = [
-  {name:'ACE',score:5000,time:42},{name:'NYX',score:4200,time:51},
+  {name:'ACE',score:5600,time:30},{name:'NYX',score:4200,time:51},
   {name:'ZED',score:3400,time:58},{name:'FAY',score:2600,time:66},
   {name:'IVO',score:1800,time:74},{name:'KAI',score:1200,time:80},
   {name:'LUX',score:800,time:88}, {name:'ORB',score:400,time:95}

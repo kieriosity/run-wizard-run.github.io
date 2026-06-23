@@ -13,7 +13,12 @@ Scoring
 - Collect shards (coins) and defeat enemies for points.
 - A speed bonus is awarded at the Moon Gate: the faster you finish, the bigger it is
   (up to 3000 points for an instant run, scaling down to 0 at the 90s par time).
-- The run timer is shown top-right; your time, speed bonus, and final score appear on the clear screen.
+- Sweep bonuses: +700 for collecting every shard, +700 for defeating every enemy.
+  Earning both is a "Perfect Clear" - and a fast Perfect Clear is the only way to break
+  the 5,600-point top score (a full clear locks in 3,605 before the speed bonus; the
+  realistic ceiling is ~5,800, so 5,600 demands a near-flawless, fast Perfect Clear).
+- You start with only 2 hearts: two hits (from enemies or falling) resets the run to zero.
+- The run timer is shown top-right; your time, sweep bonuses, and final score appear on the clear screen.
 
 Arcade leaderboard
 - An instruction popup appears on first load. Tick "Don't show this again" to skip it next time.

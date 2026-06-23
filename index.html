@@ -63,7 +63,7 @@
     <ul>
       <li>Collect shards and defeat enemies for points.</li>
       <li>Finish fast for a big <b style="color:#ffd36b;">speed bonus</b> (up to +3000).</li>
-      <li>Sweep <b>every</b> shard and enemy for a <b style="color:#9effa6;">Perfect Clear</b> bonus &mdash; the only way to challenge the 5,600 top score.</li>
+      <li>Sweep <b>every</b> shard and all 12 enemies for a <b style="color:#9effa6;">Perfect Clear</b> bonus &mdash; the only way to challenge the 6,300 top score.</li>
       <li>You have only <b style="color:#ff6b82;">2 hearts</b> &mdash; two hits and the run resets to zero.</li>
       <li>Beat a high score and you'll add your name to the board.</li>
     </ul>
@@ -168,9 +168,12 @@ const coinBase = [
 const coins = coinBase.map((p,i) => ({x:p[0], y:p[1], got:false, phase:i*.73}));
 
 const enemyBase = [
-  {x:905,y:404,a:780,b:1000,v:46,kind:0}, {x:2510,y:440,a:2420,b:2755,v:58,kind:1},
-  {x:3710,y:440,a:3520,b:3850,v:70,kind:0}, {x:4450,y:330,a:4200,b:4410,v:48,kind:1},
-  {x:4930,y:440,a:4640,b:5060,v:75,kind:0}, {x:6135,y:440,a:5930,b:6320,v:60,kind:1}
+  {x:905,y:404,a:780,b:1000,v:46,kind:0},  {x:1200,y:356,a:1112,b:1288,v:52,kind:1},
+  {x:1620,y:440,a:1440,b:1810,v:62,kind:0}, {x:2510,y:440,a:2420,b:2755,v:58,kind:1},
+  {x:2965,y:386,a:2890,b:3045,v:50,kind:0}, {x:3290,y:338,a:3200,b:3385,v:58,kind:1},
+  {x:3710,y:440,a:3520,b:3850,v:70,kind:0}, {x:4020,y:392,a:3955,b:4085,v:48,kind:0},
+  {x:4450,y:330,a:4200,b:4410,v:48,kind:1}, {x:4930,y:440,a:4640,b:5060,v:75,kind:0},
+  {x:5440,y:340,a:5375,b:5505,v:66,kind:1}, {x:6135,y:440,a:5930,b:6320,v:60,kind:1}
 ];
 let enemies = [];
 let bolts = [];
@@ -943,11 +946,11 @@ function drawLoading(msg){
 }
 
 // ===== Arcade leaderboard + menus (localStorage — GitHub-Pages friendly) =====
-const LB_KEY   = 'moonspire.scores.v2';
+const LB_KEY   = 'moonspire.scores.v3';
 const HIDE_KEY = 'moonspire.hideHowto.v1';
 const LB_MAX   = 10;
 const SEED_BOARD = [
-  {name:'ACE',score:5600,time:30},{name:'NYX',score:4200,time:51},
+  {name:'ACE',score:6300,time:32},{name:'NYX',score:4200,time:51},
   {name:'ZED',score:3400,time:58},{name:'FAY',score:2600,time:66},
   {name:'IVO',score:1800,time:74},{name:'KAI',score:1200,time:80},
   {name:'LUX',score:800,time:88}, {name:'ORB',score:400,time:95}

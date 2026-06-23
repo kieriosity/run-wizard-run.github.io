@@ -5,7 +5,9 @@ Open index.html in a browser. The game is self-contained, so the sprite sheets a
 Controls
 - A/D or Left/Right: move
 - Space, W, or Up: jump
-- J: cast a bolt
+- J: cast a bolt (travels horizontally)
+- H: down-bolt - fire straight down while airborne; reaches short enemies the level
+     bolt flies over, and pays the full 150 bolt value (vs. 125 for a stomp)
 - K: radiant light spell (raise the staff; a brilliant burst lights the scene)
 - R: restart
 

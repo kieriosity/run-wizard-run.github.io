@@ -46,7 +46,7 @@
 <body>
 <div id="hiscoreBar"><span class="lbl">High Score</span><span class="sc" id="hsScore">0</span><span class="nm" id="hsName">—</span></div>
 <div id="shell"><canvas id="game" width="960" height="540" aria-label="Moonspire Run DX game canvas"></canvas></div>
-<div class="tag"><b>Moonspire Run DX</b> — A/D or arrows move · Space/W jump · J bolt · <b>K radiant light</b> · R restart</div>
+<div class="tag"><b>Moonspire Run DX</b> — A/D or arrows move · Space/W jump · J bolt · <b>H down-bolt (in air)</b> · K radiant light · R restart</div>
 
 <div id="howto" class="overlay hidden">
   <div class="panel">
@@ -57,6 +57,7 @@
       <li><kbd>A</kbd> <kbd>D</kbd> or <kbd>&larr;</kbd> <kbd>&rarr;</kbd> &mdash; move</li>
       <li><kbd>Space</kbd> / <kbd>W</kbd> / <kbd>&uarr;</kbd> &mdash; jump</li>
       <li><kbd>J</kbd> &mdash; cast a bolt &nbsp;&middot;&nbsp; <kbd>K</kbd> &mdash; radiant light spell</li>
+      <li><kbd>H</kbd> &mdash; down-bolt while jumping (hits the short enemies a bolt flies over)</li>
       <li><kbd>R</kbd> &mdash; restart the run</li>
     </ul>
     <h2>Scoring</h2>
@@ -117,6 +118,7 @@ const keys = Object.create(null);
 let jumpBuffer = 0;
 let fireQueued = false;
 let lightQueued = false;
+let downQueued = false;
 let nowTime = 0;
 let camera = 0;
 let shake = 0;
@@ -218,6 +220,7 @@ window.addEventListener('keydown', e => {
   if (k === ' ' || k === 'w' || k === 'arrowup') jumpBuffer = .12;
   if (k === 'j') fireQueued = true;
   if (k === 'k') lightQueued = true;
+  if (k === 'h') downQueued = true;
   if (k === 'r') reset();
 });
 window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
@@ -313,11 +316,20 @@ function update(dt){
   if (fireQueued && p.spell <= 0) {
     const bx = p.x + p.w/2 + p.face * 33;
     const by = p.y + 35;
-    bolts.push({x:bx, y:by, vx:p.face*620, life:1.0, phase:nowTime});
+    bolts.push({x:bx, y:by, vx:p.face*620, vy:0, life:1.0, phase:nowTime});
     for(let i=0;i<7;i++) addParticle(bx,by,p.face*(30+hash(i)*80),-40+hash(i+33)*80,.22,2,'#7df4ff');
     p.spell = .25;
   }
   fireQueued = false;
+  // Down-bolt — fire straight down while airborne (reaches the short enemies a level bolt flies over)
+  if (downQueued && !p.on && p.spell <= 0) {
+    const bx = p.x + p.w/2;
+    const by = p.y + p.h - 6;
+    bolts.push({x:bx, y:by, vx:0, vy:780, life:.6, phase:nowTime});
+    for(let i=0;i<7;i++) addParticle(bx,by,(hash(i)-.5)*120, 50+hash(i+33)*110, .2, 2, '#7df4ff');
+    p.spell = .25;
+  }
+  downQueued = false;
 
   // Radiant Light — hold the staff aloft and release a brilliant burst
   p.lightCast = Math.max(0, p.lightCast - dt);
@@ -339,15 +351,18 @@ function update(dt){
   }
   lightQueued = false;
 
-  for (const b of bolts) { b.x += b.vx * dt; b.life -= dt; addParticle(b.x,b.y,-Math.sign(b.vx)*(60+hash(Math.round(b.x))*20),(hash(Math.round(b.y))-0.5)*30,.12,2,'#8df5ff'); }
+  for (const b of bolts) { b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt; addParticle(b.x,b.y,-Math.sign(b.vx)*(60+hash(Math.round(b.x))*20),-Math.sign(b.vy)*(60+hash(Math.round(b.y))*20)+(hash(Math.round(b.y))-0.5)*30,.12,2,'#8df5ff'); }
   bolts = bolts.filter(b => b.life > 0 && b.x > camera-100 && b.x < camera+W+160);
 
   for (const e of enemies) if (!e.dead) {
     e.x += e.v * dt;
     if (e.x < e.a || e.x > e.b) { e.x = clamp(e.x,e.a,e.b); e.v *= -1; }
     const er = {x:e.x, y:e.y, w:44, h:34};
-    for (const b of bolts) if (b.life > 0 && rectsOverlap({x:b.x-3,y:b.y-3,w:22,h:10}, er)) {
-      e.dead = true; e.squash = .2; b.life = 0; p.score += 150; burst(e.x+22,e.y+14,'#af71ff','#66e7ff',22); shake = Math.max(shake, 5);
+    for (const b of bolts) {
+      const hb = b.vy ? {x:b.x-5, y:b.y-10, w:10, h:26} : {x:b.x-3, y:b.y-3, w:22, h:10};
+      if (b.life > 0 && rectsOverlap(hb, er)) {
+        e.dead = true; e.squash = .2; b.life = 0; p.score += 150; burst(e.x+22,e.y+14,'#af71ff','#66e7ff',22); shake = Math.max(shake, 5);
+      }
     }
     if (rectsOverlap(p, er) && p.inv <= 0) {
       if (p.vy > 120 && p.y + p.h < e.y + 20) {
@@ -771,10 +786,16 @@ function drawEnemy(e){
 }
 function drawBolt(b){
   const sx = Math.round(b.x - camera), y=Math.round(b.y);
-  softGlow(sx+8, y+1, 20, '#74f1ff', .28);
-  ctx.fillStyle='#ffffff'; ctx.fillRect(sx+12,y-2,11,4);
-  ctx.fillStyle='#62eaff'; ctx.fillRect(sx-4,y-4,22,8);
-  ctx.fillStyle='#2d6cff'; ctx.fillRect(sx-12,y-2,9,4);
+  softGlow(sx, y, 18, '#74f1ff', .28);
+  if (b.vy) {                       // down-bolt: vertical streak, bright tip leading downward
+    ctx.fillStyle='#2d6cff'; ctx.fillRect(sx-2,y-12,4,9);
+    ctx.fillStyle='#62eaff'; ctx.fillRect(sx-4,y-4,8,22);
+    ctx.fillStyle='#ffffff'; ctx.fillRect(sx-2,y+12,4,11);
+  } else {                          // forward bolt
+    ctx.fillStyle='#ffffff'; ctx.fillRect(sx+12,y-2,11,4);
+    ctx.fillStyle='#62eaff'; ctx.fillRect(sx-4,y-4,22,8);
+    ctx.fillStyle='#2d6cff'; ctx.fillRect(sx-12,y-2,9,4);
+  }
 }
 
 function drawPlayer(images){

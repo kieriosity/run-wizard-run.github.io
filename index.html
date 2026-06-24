@@ -57,14 +57,14 @@
   .tbtn:active{transform:translateY(2px);background:#16245aee;box-shadow:0 1px 0 #04101fcc;}
   .tbtn.small{font-size:19px;}
   .tbtn.jump{border-color:#7fe6ff;color:#bff7ff;background:#143a63ee;}
-  /* hold-to-restart button, top-center, out of thumb range */
-  .restart{position:fixed;top:40px;left:50%;transform:translateX(-50%);width:46px;height:46px;font-size:22px;border-color:#ffffff3a;background:#0b1430aa;overflow:hidden;}
-  body.fill .restart{top:max(6px,env(safe-area-inset-top));}
-  .restart:active{transform:translateX(-50%);}
-  .restart .rglyph{position:relative;z-index:1;}
-  .restart .rfill{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#ff8a9d,#ff5b78);transform:scale(0);opacity:0;transition:transform .6s linear,opacity .2s;}
-  .restart.holding{border-color:#ff8a9d;}
-  .restart.holding .rfill{transform:scale(1.3);opacity:.92;}
+  /* restart: top-center, out of thumb range; tap to arm, tap again to confirm */
+  .restart{position:fixed;top:46px;left:50%;transform:translateX(-50%);width:46px;height:46px;font-size:22px;border-color:#ffffff3a;background:#0b1430cc;}
+  body.fill .restart{top:calc(env(safe-area-inset-top) + 14px);}
+  .restart:active{transform:translateX(-50%) translateY(1px);}
+  .restart.armed{border-color:#ff6b82;color:#ffd6dd;background:#5a1322ee;animation:rpulse 1s ease-in-out infinite;}
+  .restart::after{content:'tap again';position:absolute;top:50px;left:50%;transform:translateX(-50%);font:700 10px ui-monospace,monospace;letter-spacing:.5px;color:#ff9aa8;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none;text-shadow:0 1px 2px #000;}
+  .restart.armed::after{opacity:1;}
+  @keyframes rpulse{0%,100%{box-shadow:0 3px 0 #04101fcc,0 0 0 0 #ff6b8266;}50%{box-shadow:0 3px 0 #04101fcc,0 0 0 9px #ff6b8200;}}
 
   /* ---- full-screen fill (mobile landscape; view widened in JS to match, so no stretch) ---- */
   body.fill{padding-top:0;}
@@ -119,7 +119,7 @@
 </div>
 
 <div id="touch" class="hidden">
-  <button id="btnRestart" class="tbtn restart" aria-label="Hold to restart"><span class="rfill"></span><span class="rglyph">&#8635;</span></button>
+  <button id="btnRestart" class="tbtn restart" aria-label="Restart (tap twice to confirm)">&#8635;</button>
   <div class="tgrid tleft">
     <button class="tbtn" id="btnLeft"  aria-label="Move left">&#9664;</button>
     <button class="tbtn" id="btnRight" aria-label="Move right">&#9654;</button>
@@ -999,7 +999,8 @@ function drawClear(){
   }
   ctx.textAlign = 'center';
   ctx.fillStyle = '#9fb6d6'; ctx.font = '15px ui-monospace,Consolas,monospace';
-  ctx.fillText(awaitingName ? 'Enter your name above…' : 'Press R to run again', W/2, top + board.length*rowH + 24);
+  const againHint = document.body.classList.contains('has-touch') ? 'Tap ↻ (top) to run again' : 'Press R to run again';
+  ctx.fillText(awaitingName ? 'Enter your name above…' : againHint, W/2, top + board.length*rowH + 24);
   ctx.textAlign = 'left';
 }
 
@@ -1182,19 +1183,18 @@ function initTouch(){
   hold('btnBolt',  () => { fireQueued = true; });
   hold('btnDown',  () => { downQueued = true; });
   hold('btnLight', () => { lightQueued = true; });
-  // Hold-to-restart (top-center) — a deliberate ~0.6s press so a stray touch can't wipe a run
+  // Restart: tap to arm ("tap again"), tap again within 2.5s to confirm. Uses click so it's
+  // reliable on touch, and one stray tap can't wipe a run.
   (() => {
     const el = document.getElementById('btnRestart'); if (!el) return;
-    let timer = null;
-    const begin = e => { e.preventDefault(); if (paused) return; el.classList.add('holding'); clearTimeout(timer); timer = setTimeout(() => { el.classList.remove('holding'); reset(); }, 600); };
-    const stop  = e => { if (e) e.preventDefault(); clearTimeout(timer); el.classList.remove('holding'); };
-    el.addEventListener('touchstart', begin, {passive:false});
-    el.addEventListener('touchend',   stop, {passive:false});
-    el.addEventListener('touchcancel',stop, {passive:false});
-    el.addEventListener('mousedown',  begin);
-    el.addEventListener('mouseup',    stop);
-    el.addEventListener('mouseleave', stop);
-    el.addEventListener('contextmenu', e => e.preventDefault());
+    let armed = false, revertT = null;
+    const disarm = () => { armed = false; el.classList.remove('armed'); clearTimeout(revertT); };
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      if (paused) return;
+      if (armed) { disarm(); reset(); }
+      else { armed = true; el.classList.add('armed'); clearTimeout(revertT); revertT = setTimeout(disarm, 2500); }
+    });
   })();
   if (window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
     document.getElementById('touch').classList.remove('hidden');

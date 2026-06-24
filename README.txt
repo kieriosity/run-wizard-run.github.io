@@ -13,7 +13,8 @@ Controls
 
 On phones/tablets, on-screen touch buttons appear automatically: a left/right pad on the
 bottom-left, and jump + bolt + down-bolt + light on the bottom-right. A restart button sits
-top-center, out of thumb range, and must be held briefly so it can't be pressed by accident.
+top-center, out of thumb range; tap it once to arm it (it turns red, "tap again"), then tap
+again within 2.5s to confirm - so a single stray tap can't wipe a run in progress.
 
 Scoring
 - Collect shards (coins) and defeat enemies for points.

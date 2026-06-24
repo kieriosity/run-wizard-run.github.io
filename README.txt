@@ -12,7 +12,8 @@ Controls
 - R: restart
 
 On phones/tablets, on-screen touch buttons appear automatically: a left/right pad on the
-bottom-left, and jump + bolt + down-bolt + light on the bottom-right.
+bottom-left, and jump + bolt + down-bolt + light on the bottom-right. A restart button sits
+top-center, out of thumb range, and must be held briefly so it can't be pressed by accident.
 
 Scoring
 - Collect shards (coins) and defeat enemies for points.

@@ -57,6 +57,14 @@
   .tbtn:active{transform:translateY(2px);background:#16245aee;box-shadow:0 1px 0 #04101fcc;}
   .tbtn.small{font-size:19px;}
   .tbtn.jump{border-color:#7fe6ff;color:#bff7ff;background:#143a63ee;}
+  /* hold-to-restart button, top-center, out of thumb range */
+  .restart{position:fixed;top:40px;left:50%;transform:translateX(-50%);width:46px;height:46px;font-size:22px;border-color:#ffffff3a;background:#0b1430aa;overflow:hidden;}
+  body.fill .restart{top:max(6px,env(safe-area-inset-top));}
+  .restart:active{transform:translateX(-50%);}
+  .restart .rglyph{position:relative;z-index:1;}
+  .restart .rfill{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#ff8a9d,#ff5b78);transform:scale(0);opacity:0;transition:transform .6s linear,opacity .2s;}
+  .restart.holding{border-color:#ff8a9d;}
+  .restart.holding .rfill{transform:scale(1.3);opacity:.92;}
 
   /* ---- full-screen fill (mobile landscape; view widened in JS to match, so no stretch) ---- */
   body.fill{padding-top:0;}
@@ -111,6 +119,7 @@
 </div>
 
 <div id="touch" class="hidden">
+  <button id="btnRestart" class="tbtn restart" aria-label="Hold to restart"><span class="rfill"></span><span class="rglyph">&#8635;</span></button>
   <div class="tgrid tleft">
     <button class="tbtn" id="btnLeft"  aria-label="Move left">&#9664;</button>
     <button class="tbtn" id="btnRight" aria-label="Move right">&#9654;</button>
@@ -1173,6 +1182,20 @@ function initTouch(){
   hold('btnBolt',  () => { fireQueued = true; });
   hold('btnDown',  () => { downQueued = true; });
   hold('btnLight', () => { lightQueued = true; });
+  // Hold-to-restart (top-center) — a deliberate ~0.6s press so a stray touch can't wipe a run
+  (() => {
+    const el = document.getElementById('btnRestart'); if (!el) return;
+    let timer = null;
+    const begin = e => { e.preventDefault(); if (paused) return; el.classList.add('holding'); clearTimeout(timer); timer = setTimeout(() => { el.classList.remove('holding'); reset(); }, 600); };
+    const stop  = e => { if (e) e.preventDefault(); clearTimeout(timer); el.classList.remove('holding'); };
+    el.addEventListener('touchstart', begin, {passive:false});
+    el.addEventListener('touchend',   stop, {passive:false});
+    el.addEventListener('touchcancel',stop, {passive:false});
+    el.addEventListener('mousedown',  begin);
+    el.addEventListener('mouseup',    stop);
+    el.addEventListener('mouseleave', stop);
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  })();
   if (window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window) || navigator.maxTouchPoints > 0) {
     document.getElementById('touch').classList.remove('hidden');
     document.body.classList.add('has-touch');

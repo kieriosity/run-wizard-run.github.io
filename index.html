@@ -41,6 +41,12 @@
     width:240px;max-width:70vw;padding:10px 12px;border-radius:10px;border:2px solid #2ba8ff;background:#04111f;color:#fff1b0;outline:none;}
   .nin:focus{box-shadow:0 0 0 3px #2ba8ff55;}
   .sub{font-size:12.5px;color:#88a3bd;text-align:center;margin-top:4px;}
+  .diffs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 2px;}
+  .diffbtn{cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border-radius:9px;border:1px solid #2c456f;background:#0c1530;color:#cfe6f4;font:700 13px ui-monospace,Consolas,monospace;letter-spacing:.5px;}
+  .diffbtn small{font-weight:600;font-size:10.5px;color:#8aa6c4;letter-spacing:0;}
+  .diffbtn.sel{border-color:#7fe6ff;background:#13325a;color:#eaf6ff;box-shadow:0 0 0 1px #7fe6ff88,0 0 14px #2ba8ff55;}
+  .diffbtn.sel small{color:#bfe6ff;}
+  #howto.lean .howto-extra{display:none;}
 
   /* ---- touch controls (mobile) ---- */
   #game{touch-action:none;}
@@ -82,6 +88,14 @@
   <div class="panel">
     <h1>Moonspire Run DX</h1>
     <p style="text-align:center;color:#9fb6d6;">Sprint through the moonlit ruins and reach the Moon Gate.</p>
+    <h2>Difficulty <span style="color:#7e9bbb;font-weight:600;text-transform:none;letter-spacing:0;">(harder = bigger completion bonus)</span></h2>
+    <div class="diffs">
+      <button class="diffbtn" data-diff="easy">Easy<small>5 &#9829; &middot; +0</small></button>
+      <button class="diffbtn" data-diff="medium">Medium<small>3 &#9829; &middot; +500</small></button>
+      <button class="diffbtn" data-diff="hard">Hard<small>2 &#9829; &middot; +1200</small></button>
+      <button class="diffbtn" data-diff="extreme">Extreme<small>1 &#9829; &middot; +2500</small></button>
+    </div>
+    <div class="howto-extra">
     <h2>Controls</h2>
     <ul>
       <li><kbd>A</kbd> <kbd>D</kbd> or <kbd>&larr;</kbd> <kbd>&rarr;</kbd> &mdash; move</li>
@@ -94,12 +108,13 @@
     <ul>
       <li>Collect shards and defeat enemies for points.</li>
       <li>Finish fast for a big <b style="color:#ffd36b;">speed bonus</b> (up to +3000).</li>
-      <li>Sweep <b>every</b> shard and all 12 enemies for a <b style="color:#9effa6;">Perfect Clear</b> bonus &mdash; the only way to challenge the 6,300 top score.</li>
-      <li>You have only <b style="color:#ff6b82;">2 hearts</b> &mdash; two hits and the run resets to zero.</li>
+      <li>Sweep <b>every</b> shard and all 12 enemies for a <b style="color:#9effa6;">Perfect Clear</b> bonus.</li>
+      <li>Lose all your hearts (set by difficulty) and the run resets to zero.</li>
       <li>Beat a high score and you'll add your name to the board.</li>
     </ul>
+    </div>
     <div class="row">
-      <label class="chk"><input type="checkbox" id="howtoHide"> Don't show this again</label>
+      <label class="chk"><input type="checkbox" id="howtoHide"> Hide how-to next time</label>
       <button class="btn" id="howtoPlay">Play &#9656;</button>
     </div>
   </div>
@@ -168,6 +183,15 @@ const PAR_TIME = 90;             // seconds; finish under this for a speed bonus
 const TIME_BONUS_MAX = 3000;     // points awarded for an instant finish (scales down to 0 at PAR_TIME)
 const SHARD_SWEEP = 700;         // bonus for collecting EVERY shard
 const ENEMY_SWEEP = 700;         // bonus for defeating EVERY enemy (both = "Perfect Clear", needed to beat 5,000)
+// Difficulty: starting hearts + a completion bonus that grows the harder you play
+const DIFFS = {
+  easy:    { label:'Easy',    hearts:5, bonus:0 },
+  medium:  { label:'Medium',  hearts:3, bonus:500 },
+  hard:    { label:'Hard',    hearts:2, bonus:1200 },
+  extreme: { label:'Extreme', hearts:1, bonus:2500 }
+};
+const DIFF_KEY = 'moonspire.difficulty.v1';
+let difficulty = 'hard';
 const PF = 192;                  // source sprite frame size (px)
 const PLAYER_H = 150;            // on-screen player draw height (px)
 const FEET_FRAC = 186/192;       // where the feet sit inside the sprite frame
@@ -241,7 +265,7 @@ let particles = [];
 let p;
 
 function makePlayer(){
-  return {x:112, y:280, w:36, h:78, vx:0, vy:0, face:1, on:false, coyote:0, inv:0, spell:0, score:0, life:2, shards:0, runAnim:0, idleAnim:0, footClock:0, lastOn:false, lightCast:0, lightCool:0, time:0, timeBonus:0, shardSweep:0, enemySweep:0};
+  return {x:112, y:280, w:36, h:78, vx:0, vy:0, face:1, on:false, coyote:0, inv:0, spell:0, score:0, life:(DIFFS[difficulty]||DIFFS.hard).hearts, shards:0, runAnim:0, idleAnim:0, footClock:0, lastOn:false, lightCast:0, lightCool:0, time:0, timeBonus:0, shardSweep:0, enemySweep:0, diffBonus:0};
 }
 function reset(){
   p = makePlayer();
@@ -453,7 +477,8 @@ function update(dt){
     p.timeBonus = Math.max(0, Math.round(TIME_BONUS_MAX * (1 - p.time / PAR_TIME)));
     p.shardSweep = (p.shards >= coins.length) ? SHARD_SWEEP : 0;   // every shard collected
     p.enemySweep = enemies.every(e => e.dead) ? ENEMY_SWEEP : 0;   // every enemy defeated
-    p.score += p.shards * 10 + p.timeBonus + p.shardSweep + p.enemySweep;
+    p.diffBonus = (DIFFS[difficulty]||DIFFS.hard).bonus;
+    p.score += p.shards * 10 + p.timeBonus + p.shardSweep + p.enemySweep + p.diffBonus;
     burst(LEVEL_W-240,380,'#9effff','#ffe591',80); shake = 14;
     onLevelClear();
   }
@@ -978,6 +1003,7 @@ function drawClear(){
   const parts = ['Speed +' + p.timeBonus];
   if (p.shardSweep) parts.push('Shard sweep +' + p.shardSweep);
   if (p.enemySweep) parts.push('Enemy sweep +' + p.enemySweep);
+  if (p.diffBonus) parts.push((DIFFS[difficulty]||DIFFS.hard).label + ' +' + p.diffBonus);
   ctx.fillStyle = '#cfe6f4'; ctx.fillText(parts.join('     '), W/2, 134);
   // score (gold, or green + badge on a perfect clear)
   ctx.font = '22px ui-monospace,Consolas,monospace'; ctx.fillStyle = perfect ? '#9effa6' : '#ffcf63';
@@ -1088,8 +1114,12 @@ function setPaused(b){ paused = b; }
 
 // ---- instruction popup ----
 function showHowto(){
-  document.getElementById('howtoHide').checked = false;
-  document.getElementById('howto').classList.remove('hidden');
+  let lean = false;
+  try { lean = localStorage.getItem(HIDE_KEY) === '1'; } catch(_) {}
+  const el = document.getElementById('howto');
+  el.classList.toggle('lean', lean);   // collapse the how-to text but always keep difficulty + Play
+  document.getElementById('howtoHide').checked = lean;
+  el.classList.remove('hidden');
   setPaused(true);
 }
 function hideHowto(){
@@ -1140,9 +1170,7 @@ function initArcade(){
   renderHiScoreBar();
   wireHowto();
   wireNameEntry();
-  let hidden = false;
-  try { hidden = localStorage.getItem(HIDE_KEY) === '1'; } catch(_) {}
-  if (hidden) setPaused(false); else showHowto();
+  showHowto();   // always show the start menu (difficulty + Play); "hide how-to" only collapses the text
 }
 
 async function boot(){
@@ -1202,7 +1230,23 @@ function initTouch(){
   }
 }
 
+// Difficulty selector (in the start menu) — sets starting hearts + the completion bonus
+function setDifficulty(key){
+  if (!DIFFS[key]) return;
+  difficulty = key;
+  try { localStorage.setItem(DIFF_KEY, key); } catch(_) {}
+  document.querySelectorAll('.diffbtn').forEach(b => b.classList.toggle('sel', b.dataset.diff === key));
+  reset();   // re-init the player with the new heart count (the game is paused at the menu)
+}
+function initDifficulty(){
+  let saved = 'hard';
+  try { const s = localStorage.getItem(DIFF_KEY); if (s && DIFFS[s]) saved = s; } catch(_) {}
+  document.querySelectorAll('.diffbtn').forEach(b => b.addEventListener('click', () => setDifficulty(b.dataset.diff)));
+  setDifficulty(saved);
+}
+
 boot();
+initDifficulty();
 initArcade();
 initTouch();
 })();

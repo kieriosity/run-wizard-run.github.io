@@ -17,6 +17,9 @@ top-center, out of thumb range; tap it once to arm it (it turns red, "tap again"
 again within 2.5s to confirm - so a single stray tap can't wipe a run in progress.
 
 Scoring
+- Difficulty (chosen in the start menu) sets your starting hearts and a completion bonus:
+  Easy 5 hearts +0, Medium 3 hearts +500, Hard 2 hearts +1200, Extreme 1 heart +2500.
+  The harder you play, the bigger the bonus - so the top of the board favours brave runs.
 - Collect shards (coins) and defeat enemies for points.
 - A speed bonus is awarded at the Moon Gate: the faster you finish, the bigger it is
   (up to 3000 points for an instant run, scaling down to 0 at the 90s par time).

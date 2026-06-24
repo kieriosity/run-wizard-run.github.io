@@ -47,6 +47,18 @@
   .diffbtn.sel{border-color:#7fe6ff;background:#13325a;color:#eaf6ff;box-shadow:0 0 0 1px #7fe6ff88,0 0 14px #2ba8ff55;}
   .diffbtn.sel small{color:#bfe6ff;}
   #howto.lean .howto-extra{display:none;}
+  .rbtns{display:flex;gap:8px;align-items:center;}
+  .btn.ghost{color:#bfe6ff;background:#10213f;box-shadow:0 4px 0 #0a1730,0 8px 18px #0006;}
+  .btn.ghost:active{box-shadow:0 1px 0 #0a1730,0 4px 10px #0006;}
+  #hiscoreBar{cursor:pointer;}
+  #hiscoreBar:hover{background:linear-gradient(180deg,#102449,#06070fdd);}
+  .board-list{list-style:none;margin:12px 0 8px;padding:0;max-height:54vh;overflow:auto;}
+  .board-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;font:700 16px ui-monospace,Consolas,monospace;color:#9fb6d6;}
+  .board-row:nth-child(odd){background:#0b1428cc;}
+  .board-row.top{color:#eaf6ff;}
+  .board-row .b-rank{color:#7e9bbb;text-align:right;}
+  .board-row .b-score{color:#ffcf63;}
+  .board-empty{color:#9fb6d6;text-align:center;padding:18px;font-size:14px;}
 
   /* ---- touch controls (mobile) ---- */
   #game{touch-action:none;}
@@ -80,7 +92,7 @@
 </style>
 </head>
 <body>
-<div id="hiscoreBar"><span class="lbl">High Score</span><span class="sc" id="hsScore">0</span><span class="nm" id="hsName">—</span></div>
+<div id="hiscoreBar" title="View leaderboard"><span class="lbl">High Score</span><span class="sc" id="hsScore">0</span><span class="nm" id="hsName">—</span></div>
 <div id="shell"><canvas id="game" width="960" height="540" aria-label="Moonspire Run DX game canvas"></canvas></div>
 <div class="tag"><b>Moonspire Run DX</b> — A/D or arrows move · Space/W jump · J bolt · <b>H down-bolt (in air)</b> · K radiant light · R restart</div>
 
@@ -115,7 +127,10 @@
     </div>
     <div class="row">
       <label class="chk"><input type="checkbox" id="howtoHide"> Hide how-to next time</label>
-      <button class="btn" id="howtoPlay">Play &#9656;</button>
+      <div class="rbtns">
+        <button class="btn ghost" id="howtoBoard">Leaderboard</button>
+        <button class="btn" id="howtoPlay">Play &#9656;</button>
+      </div>
     </div>
   </div>
 </div>
@@ -129,6 +144,16 @@
     <div class="sub">up to 14 characters</div>
     <div class="row" style="justify-content:center;">
       <button class="btn" id="nameSave">Save &#9656;</button>
+    </div>
+  </div>
+</div>
+
+<div id="board" class="overlay hidden">
+  <div class="panel" style="max-width:480px;">
+    <h1 style="color:#ffd36b;">&#9733; High Scores &#9733;</h1>
+    <ol id="boardList" class="board-list"></ol>
+    <div class="row" style="justify-content:center;">
+      <button class="btn" id="boardBack">&#9664; Back</button>
     </div>
   </div>
 </div>
@@ -1110,6 +1135,44 @@ function renderHiScoreBar(){
   if (nm) nm.textContent = top.name;
 }
 
+// ---- viewable leaderboard ----
+let boardReturnTo = 'menu';
+function renderBoardList(){
+  const ol = document.getElementById('boardList');
+  ol.textContent = '';
+  if (!board.length){
+    const li = document.createElement('li'); li.className = 'board-empty';
+    li.textContent = 'No scores yet — be the first!'; ol.appendChild(li); return;
+  }
+  board.forEach((e, i) => {
+    const li = document.createElement('li'); li.className = 'board-row' + (i < 3 ? ' top' : '');
+    const rank = document.createElement('span'); rank.className = 'b-rank'; rank.textContent = (i + 1) + '.';
+    const name = document.createElement('span'); name.className = 'b-name'; name.textContent = cleanName(e.name); // textContent => no HTML/script injection
+    const score = document.createElement('span'); score.className = 'b-score'; score.textContent = fmtNum(e.score);
+    li.append(rank, name, score); ol.appendChild(li);
+  });
+}
+function openBoard(from){
+  boardReturnTo = from;
+  renderBoardList();
+  if (from === 'menu') document.getElementById('howto').classList.add('hidden');
+  document.getElementById('board').classList.remove('hidden');
+  setPaused(true);
+}
+function closeBoard(){
+  document.getElementById('board').classList.add('hidden');
+  if (boardReturnTo === 'menu') showHowto(); else setPaused(false);   // back to the menu, or resume play
+}
+function wireBoard(){
+  document.getElementById('howtoBoard').addEventListener('click', () => openBoard('menu'));
+  document.getElementById('boardBack').addEventListener('click', closeBoard);
+  const boardEl = document.getElementById('board');
+  boardEl.addEventListener('click', e => { if (e.target === boardEl) closeBoard(); });   // click the backdrop to close
+  const bar = document.getElementById('hiscoreBar');
+  if (bar) bar.addEventListener('click', () => { if (boardEl.classList.contains('hidden')) openBoard('play'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !boardEl.classList.contains('hidden')) closeBoard(); });
+}
+
 function setPaused(b){ paused = b; }
 
 // ---- instruction popup ----
@@ -1170,6 +1233,7 @@ function initArcade(){
   renderHiScoreBar();
   wireHowto();
   wireNameEntry();
+  wireBoard();
   showHowto();   // always show the start menu (difficulty + Play); "hide how-to" only collapses the text
 }
 

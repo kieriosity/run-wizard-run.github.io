@@ -34,6 +34,8 @@ Arcade leaderboard
 - An instruction popup appears on first load. Tick "Don't show this again" to skip it next time.
 - The top-10 high scores are kept arcade-style. Beat a listed score and you enter your name.
 - The current #1 high score and name are shown in the bar at the top of the page.
+- View the full board any time: the "Leaderboard" button on the start menu, or click the
+  high-score bar during a run (Esc, the backdrop, or Back closes it).
 - Scores persist in the browser via localStorage (works on GitHub Pages, which is static/read-only
   and cannot host a writable file). Persistence is per-browser; a globally shared leaderboard would
   need an external service (e.g. a small serverless API).

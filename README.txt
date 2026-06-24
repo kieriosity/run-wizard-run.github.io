@@ -11,6 +11,9 @@ Controls
 - K: radiant light spell (raise the staff; a brilliant burst lights the scene)
 - R: restart
 
+On phones/tablets, on-screen touch buttons appear automatically: a left/right pad on the
+bottom-left, and jump + bolt + down-bolt + light on the bottom-right.
+
 Scoring
 - Collect shards (coins) and defeat enemies for points.
 - A speed bonus is awarded at the Moon Gate: the faster you finish, the bigger it is

@@ -44,7 +44,7 @@ Arcade leaderboard
   localStorage are re-validated, so a tampered store can't break or exploit the page.
 
 What changed in this DX rebuild
-- Wizard rebuilt from scratch as pixel sprites: 12-frame run cycle, 6-frame idle, 2 airborne frames.
+- Wizard is a single 16-frame pixel-art strip (81x100 frames, drawn at 1.5x): standing pose, 8-frame run step, airborne frames for jumps.
 - Improved animation timing: run frames advance based on actual movement speed, with landing dust and footstep particles.
 - Reworked 16-bit style parallax: sky, moon, stars, distant mountains, castles, forest layers, ruins, fireflies, and mist.
 - Textured tiles and background props: mossy stone, cracks, brickwork, crystal clusters, lanterns, mushrooms, grass, rune stones, and a moon gate.

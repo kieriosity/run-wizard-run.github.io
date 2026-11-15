@@ -48,4 +48,9 @@ What changed in this DX rebuild
 - Improved animation timing: run frames advance based on actual movement speed, with landing dust and footstep particles.
 - Reworked 16-bit style parallax: sky, moon, stars, distant mountains, castles, forest layers, ruins, fireflies, and mist.
 - Textured tiles and background props: mossy stone, cracks, brickwork, crystal clusters, lanterns, mushrooms, grass, rune stones, and a moon gate.
+- Art pass: baked pixel-art castles (spired towers with pennants, a keep with corner turrets, lit windows), drifting pixel clouds, moonlit ridges and layered pines, broken stone ruins, round toadstool clusters, hanging lanterns, vines under the floating ledges, and a stone Moon Gate with a swirling portal.
+- Platforms use the rune-stone ledge from assets/tileset_v2.png (slab cap, glowing rune brackets, cracked face, brick
+  foundation), cut into a seamless strip and embedded in index.html. assets/tileset_v1.png is the previous tile sheet.
+- Screen shake only fires on impacts (hits, stomps, spells, the level clear) and moves the whole scene smoothly;
+  jumping and landing no longer shake the background.
 - More robust loading: index.html embeds the art, so local asset path issues should not cause flashing.

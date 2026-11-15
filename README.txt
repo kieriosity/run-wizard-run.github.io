@@ -48,4 +48,5 @@ What changed in this DX rebuild
 - Improved animation timing: run frames advance based on actual movement speed, with landing dust and footstep particles.
 - Reworked 16-bit style parallax: sky, moon, stars, distant mountains, castles, forest layers, ruins, fireflies, and mist.
 - Textured tiles and background props: mossy stone, cracks, brickwork, crystal clusters, lanterns, mushrooms, grass, rune stones, and a moon gate.
+- Art pass: baked pixel-art castles (spired towers with pennants, a keep with corner turrets, lit windows), drifting pixel clouds, moonlit ridges and layered pines, broken stone ruins, round toadstool clusters, hanging lanterns, vines under the floating ledges, and a stone Moon Gate with a swirling portal.
 - More robust loading: index.html embeds the art, so local asset path issues should not cause flashing.

@@ -218,7 +218,8 @@ let difficulty = 'hard';
 // Wizard sprite strip: 16 frames of 81x100 px (0 stand, 1-3 wind-up, 4-11 run step, 12-15 slow-down)
 const SW = 81, SH = 100;         // source frame size (px)
 const WIZ_SCALE = 1.5;           // on-screen scale (pixel art, drawn without smoothing)
-const FOOT_ROW = 96;             // sprite row the feet rest on
+const FOOT_ROW = 96;             // lowest sprite row (the soles); drawn flush on the ground
+const WIZ_SPLIT = 64;            // idle breathing: rows above this rise, the legs stay planted
 const BODY_X = 42;               // body centre within a frame
 const WIZ_STAND = 0, WIZ_RISE = 6, WIZ_FALL = 7;    // frames 6-7 are the airborne part of the step
 const WIZ_RUN = [4, 5, 6, 7, 8, 9, 10, 11];
@@ -1155,12 +1156,41 @@ function drawLamp(x,y,seed){
   ctx.fillRect(lx - 6, ly + 4, 1, 12); ctx.fillRect(lx + 5, ly + 4, 1, 12);
   ctx.fillRect(lx - 6, ly + 16, 12, 2); ctx.fillRect(lx - 2, ly + 18, 4, 2);
 }
+// Rounded headstone in the platforms' rune-stone style: bevelled, moonlit edge, glowing upright cross
 function drawRuneStone(x,y,seed){
-  ctx.fillStyle='#070a13'; ctx.fillRect(x-13,y-4,28,4);
-  fillPoly([[x-12,y-42],[x+3,y-50],[x+15,y-38],[x+12,y-6],[x-11,y-5]], '#2a3652');
-  fillPoly([[x-7,y-37],[x+4,y-43],[x+10,y-34],[x+7,y-10],[x-7,y-9]], '#405777');
-  ctx.fillStyle='#5cf0ff'; ctx.globalAlpha=.6+Math.sin(nowTime*3+seed)*.18; ctx.fillRect(x-1,y-35,3,18); ctx.fillRect(x-6,y-24,13,3); ctx.globalAlpha=1;
-  strokeLine([[x-12,y-42],[x+3,y-50],[x+15,y-38],[x+12,y-6],[x-11,y-5],[x-12,y-42]], '#060914', 2);
+  const ink = '#080c1c', stone = '#3a5088', lit = '#6888cc', hi = '#b6d0ff', shade = '#24335f', recess = '#283c70';
+  const top = y - 36;                                     // where the rounded top begins
+  // plinth
+  ctx.fillStyle = ink; ctx.fillRect(x - 18, y - 9, 36, 9);
+  ctx.fillStyle = shade; ctx.fillRect(x - 16, y - 7, 32, 6);
+  ctx.fillStyle = lit; ctx.fillRect(x - 16, y - 7, 32, 1); ctx.fillRect(x + 14, y - 7, 2, 6);
+  // slab: outline, moonlit body, stone face set left so a lit bevel shows on the right and top
+  pxEllipse(ctx, x, top, 15, 13, ink, true); ctx.fillStyle = ink; ctx.fillRect(x - 15, top, 30, y - 8 - top);
+  pxEllipse(ctx, x, top + 1, 13, 12, lit, true); ctx.fillStyle = lit; ctx.fillRect(x - 13, top, 26, y - 9 - top);
+  pxEllipse(ctx, x - 1, top + 2, 11, 11, stone, true); ctx.fillStyle = stone; ctx.fillRect(x - 12, top + 1, 23, y - 10 - top);
+  ctx.fillStyle = shade; ctx.fillRect(x - 12, top + 1, 2, y - 10 - top);
+  for (let a = .35; a < 1.25; a += .22) {                 // moonlight glinting on the upper-right curve
+    ctx.fillStyle = hi; ctx.fillRect(Math.round(x + Math.cos(a) * 12) - 1, Math.round(top + 1 - Math.sin(a) * 11), 2, 2);
+  }
+  // recessed panel with the engraved cross (crossbar near the top: upright)
+  pxEllipse(ctx, x - 1, top + 4, 7, 6, recess, true); ctx.fillStyle = recess; ctx.fillRect(x - 8, top + 3, 14, 22);
+  ctx.fillStyle = ink; ctx.fillRect(x - 8, top + 3, 1, 22);
+  const pulse = .8 + Math.sin(nowTime * 2.2 + seed) * .15;
+  softGlow(x - 1, top + 6, 20, '#5ff3ff', .36 * pulse);
+  ctx.globalAlpha = pulse; ctx.fillStyle = '#7ff6ff';
+  ctx.fillRect(x - 2, top - 3, 3, 24);                    // upright
+  ctx.fillRect(x - 7, top + 2, 13, 3);                    // crossbar, a quarter of the way down
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#e6ffff'; ctx.fillRect(x - 1, top + 2, 1, 3);
+  // a crack and some moss
+  ctx.fillStyle = ink;
+  ctx.fillRect(x + 6, top + 9, 1, 3); ctx.fillRect(x + 7, top + 12, 1, 3); ctx.fillRect(x + 6, top + 15, 1, 2); ctx.fillRect(x + 8, top + 15, 1, 2);
+  ctx.fillStyle = '#2a8a6c'; ctx.fillRect(x - 12, y - 12, 6, 2); ctx.fillRect(x - 13, y - 10, 9, 1); ctx.fillRect(x + 6, y - 11, 4, 2);
+  ctx.fillStyle = '#45c08e'; ctx.fillRect(x - 11, y - 13, 3, 1);
+  // little rune diamond on the plinth, like the ledge brackets
+  ctx.fillStyle = '#5ff3ff'; ctx.globalAlpha = pulse;
+  ctx.fillRect(x - 1, y - 6, 2, 1); ctx.fillRect(x - 2, y - 5, 4, 2); ctx.fillRect(x - 1, y - 3, 2, 1);
+  ctx.globalAlpha = 1;
 }
 function drawGrass(x,y,seed){
   ctx.strokeStyle='#3bd49d'; ctx.lineWidth=2;
@@ -1192,16 +1222,58 @@ function drawCoin(co){
   fillPoly([[sx,yy-11],[sx+w*.45,yy-3],[sx,yy+8],[sx-w*.45,yy-3]], '#fff0a7');
   strokeLine([[sx,yy-16],[sx+w,yy-5],[sx+w*.65,yy+14],[sx-w*.65,yy+14],[sx-w,yy-5],[sx,yy-16]], '#4a2440', 2);
 }
+// Jelly slimes: squash-and-stretch hop, glossy dome, glowing core, rising bubbles, eyes that blink and look ahead
+const SLIME_PALS = [
+  { ink:'#060a1c', dark:'#1d3992', body:'#2e68dc', mid:'#4a9af0', light:'#8fe2ff', core:'#d4fbff', glow:'#6ae7ff' },   // azure
+  { ink:'#10061e', dark:'#46198c', body:'#7536cf', mid:'#9a5ef0', light:'#d6a6ff', core:'#ffd6f6', glow:'#bc6dff' },   // violet
+];
 function drawEnemy(e){
-  const sx = Math.round(e.x - camera), y = e.y;
-  const squash = e.squash || 0;
-  const wob = Math.sin(nowTime*7 + e.x*.03)*3;
-  ctx.fillStyle = '#060913'; ctx.fillRect(sx+4, y+28, 38, 7);
-  softGlow(sx+23, y+20, 32, e.kind?'#bc6dff':'#6ae7ff', .34);
-  fillPoly([[sx+3,y+16+wob*.3],[sx+12,y+4],[sx+32,y+3],[sx+43,y+18+wob*.2],[sx+38,y+34-squash*16],[sx+7,y+34-squash*16]], e.kind?'#7b3acf':'#3444a6');
-  fillPoly([[sx+9,y+12],[sx+20,y+7],[sx+31,y+8],[sx+38,y+17],[sx+32,y+24],[sx+14,y+23]], e.kind?'#b367ff':'#5ed6ff');
-  ctx.fillStyle='#ff6680'; ctx.fillRect(sx+(e.v>0?29:12),y+14,7,5); ctx.fillStyle='#fff'; ctx.fillRect(sx+(e.v>0?32:15),y+15,2,2);
-  strokeLine([[sx+3,y+16],[sx+12,y+4],[sx+32,y+3],[sx+43,y+18],[sx+38,y+34],[sx+7,y+34],[sx+3,y+16]], '#070916', 2);
+  const pal = SLIME_PALS[e.kind ? 1 : 0];
+  const cx = Math.round(e.x - camera) + 22, base = e.y + 34;
+  const dir = e.v > 0 ? 1 : -1;
+  const sq = Math.sin(nowTime * 6 + e.x * .03);
+  const rx = 19 + Math.round(sq * 2), ry = 22 - Math.round(sq * 2) - Math.round((e.squash || 0) * 12);
+  softGlow(cx, base - 12, 36, pal.glow, .28);
+  pxEllipse(ctx, cx, base + 1, rx + 5, 3, '#03050e');                     // contact shadow
+  // jelly dome: outline, dark rim, body, lighter crown toward the moon
+  pxEllipse(ctx, cx, base, rx + 2, ry + 2, pal.ink, true);
+  pxEllipse(ctx, cx, base, rx, ry, pal.dark, true);
+  pxEllipse(ctx, cx, base - 2, rx - 2, ry - 3, pal.body, true);
+  pxEllipse(ctx, cx + 2, base - 6, Math.round(rx * .7), Math.round(ry * .62), pal.mid, true);
+  for (const side of [-1, 1]) {                                            // gooey spread where it meets the ground
+    pxEllipse(ctx, cx + side * (rx + 1), base, 5, 4, pal.ink, true);
+    pxEllipse(ctx, cx + side * (rx + 1), base, 3, 2, pal.dark, true);
+  }
+  // glowing core and bubbles drifting up inside
+  softGlow(cx - dir * 6, base - 7, 10, pal.core, .5);
+  pxEllipse(ctx, cx - dir * 6, base - 7, 3, 2, pal.core);
+  for (let k = 0; k < 3; k++) {
+    const span = Math.max(6, ry - 8), rise = (nowTime * 9 + k * 7 + e.x * .7) % span;
+    ctx.globalAlpha = .7 * (1 - rise / span);
+    ctx.fillStyle = pal.light;
+    ctx.fillRect(Math.round(cx - dir * (9 - k * 4)), Math.round(base - 5 - rise), 2, 2);
+  }
+  ctx.globalAlpha = 1;
+  // glossy highlight where the moon catches it
+  ctx.fillStyle = pal.light;
+  for (let a = .45; a < 1.2; a += .15)                                    // gloss following the curve
+    ctx.fillRect(Math.round(cx + Math.cos(a) * (rx - 4)), Math.round(base - Math.sin(a) * (ry - 4)), 2, 2);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(cx + Math.cos(1.05) * (rx - 4)), Math.round(base - Math.sin(1.05) * (ry - 4)), 2, 2);
+  // face: two eyes looking ahead, a blink now and then, a small fanged mouth
+  const ey = base - Math.round(ry * .58), ex = cx + dir * 4;
+  const blink = ((nowTime + e.x * .013) % 3.4) < .13;
+  for (const ox of [-7, 3]) {
+    const inner = ox < 0 ? 1 : -1;                                         // brows slant down toward the middle
+    ctx.fillStyle = pal.ink;
+    ctx.fillRect(ex + ox + (inner > 0 ? 0 : 2), ey - 3, 3, 1); ctx.fillRect(ex + ox + (inner > 0 ? 3 : 0), ey - 2, 2, 1);
+    if (blink) { ctx.fillRect(ex + ox, ey + 3, 5, 1); continue; }
+    ctx.fillRect(ex + ox - 1, ey, 7, 6); ctx.fillRect(ex + ox, ey - 1, 5, 8);   // rounded outline
+    ctx.fillStyle = '#f2fbff';   ctx.fillRect(ex + ox, ey + 1, 5, 4); ctx.fillRect(ex + ox + 1, ey, 3, 6);
+    ctx.fillStyle = pal.ink;     ctx.fillRect(ex + ox + (dir > 0 ? 2 : 1), ey + 1, 2, 4);
+    ctx.fillStyle = '#ffffff';   ctx.fillRect(ex + ox + (dir > 0 ? 3 : 1), ey + 1, 1, 1);
+  }
+  ctx.fillStyle = pal.ink;   ctx.fillRect(ex - 3, ey + 9, 8, 2);
+  ctx.fillStyle = '#f2fbff'; ctx.fillRect(ex + (dir > 0 ? 3 : -2), ey + 9, 1, 2);
 }
 function drawBolt(b){
   const sx = Math.round(b.x - camera), y=Math.round(b.y);
@@ -1219,7 +1291,7 @@ function drawBolt(b){
 
 function drawPlayer(images){
   const sheet = images.wizard;
-  let frame = WIZ_STAND, bob = 0;
+  let frame = WIZ_STAND, breath = 0;
   if (p.lightCast > 0) {                       // planted, staff held aloft
     frame = WIZ_STAND;
   } else if (!p.on) {
@@ -1227,16 +1299,23 @@ function drawPlayer(images){
   } else if (Math.abs(p.vx) > 30) {
     frame = WIZ_RUN[Math.floor(p.runAnim) % WIZ_RUN.length];
   } else {
-    bob = Math.sin(nowTime*3) * 2;             // gentle breathing
+    breath = Math.round(1 - Math.cos(nowTime * 2.4));   // 0-2px: the chest rises and falls, the boots stay put
   }
   const drawX = Math.round(p.x + p.w/2 - camera);
-  const topY = Math.round(p.y + p.h - FOOT_ROW*WIZ_SCALE + bob);
+  const topY = Math.round(p.y + p.h - (FOOT_ROW + 1)*WIZ_SCALE);   // soles sit exactly on the surface
   ctx.save();
   if (p.inv > 0 && Math.floor(nowTime*22)%2===0) ctx.globalAlpha = .5;
   ctx.imageSmoothingEnabled = false;
   ctx.translate(drawX, topY);
   ctx.scale(p.face,1);
-  if (sheet) ctx.drawImage(sheet, frame*SW, 0, SW, SH, -BODY_X*WIZ_SCALE, 0, SW*WIZ_SCALE, SH*WIZ_SCALE);
+  if (sheet) {
+    const sx = frame*SW, dx = -BODY_X*WIZ_SCALE, dw = SW*WIZ_SCALE;
+    if (breath) {
+      // upper body (with a little overlap so no gap opens), then the legs at their normal place
+      ctx.drawImage(sheet, sx, 0, SW, WIZ_SPLIT + 2, dx, -breath, dw, (WIZ_SPLIT + 2)*WIZ_SCALE);
+      ctx.drawImage(sheet, sx, WIZ_SPLIT, SW, SH - WIZ_SPLIT, dx, WIZ_SPLIT*WIZ_SCALE, dw, (SH - WIZ_SPLIT)*WIZ_SCALE);
+    } else ctx.drawImage(sheet, sx, 0, SW, SH, dx, 0, dw, SH*WIZ_SCALE);
+  }
   else { ctx.fillStyle='#1491d7'; ctx.fillRect(-18,30,36,70); }
   ctx.restore();
 }
